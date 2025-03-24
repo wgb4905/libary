@@ -1,0 +1,41 @@
+<!-- library/templates/library/my_borrowings.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h1 class="mb-4 text-center">我的租借</h1>
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>图书名</th>
+                <th>租借日</th>
+                <th>到期日</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for copy in borrowed_copies %}
+            <tr>
+                <td>{{ copy.book.title }}</td>
+                <td>{{ copy.borrowed_date }}</td>
+                <td>{{ copy.due_date }}</td>
+                <td>
+                    {% if copy.status == 'overdue' %}
+                        <span class="text-danger">逾期 {{ copy.days_overdue }} 天</span>
+                    {% elif copy.status == 'due_today' %}
+                        <span class="text-warning">请于当天归还书籍</span>
+                    {% else %}
+                        <span class="text-success">剩余 {{ copy.days_remaining }} 天</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'return_book' copy.book.id %}" class="btn btn-warning">归还</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

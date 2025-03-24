@@ -1,0 +1,112 @@
+<!-- library/templates/library/book_detail.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-body">
+        <h1 class="card-title">{{ book.title }}</h1>
+        <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+        <p class="card-text"><strong>简介:</strong> {{ book.description }}</p>
+        <p class="card-text"><strong>Keywords:</strong> {{ book.keywords }}</p>
+        <p class="card-text"><strong>Recommended Age:</strong> {{ book.recommended_age }}</p>
+        <h2>Available Copies</h2>
+        <p class="card-text">剩余可租借副本数: {{ available_copies_count }}</p>
+        {% if user.is_authenticated %}
+            {% if user_has_borrowed %}
+                <a href="{% url 'return_book' book.id %}" class="btn btn-warning">归还</a>
+            {% else %}
+                <button class="btn btn-primary" onclick="showBorrowModal()">租借</button>
+            {% endif %}
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">登录以租借</a>
+        {% endif %}
+        <a href="{% url 'book_list' %}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+<!-- Borrow Modal -->
+<div id="borrowModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-center w-100">请确认以下信息</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>书名:</strong> {{ book.title }}</p>
+                <p><strong>作者:</strong> {{ book.author }}</p>
+                <label for="days"><strong>租借天数:</strong></label>
+                <input type="number" id="days" name="days" value="7" min="1" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="confirmBorrow({{ book.id }})">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-center w-100">租借成功！</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>书名:</strong> <span id="successBookTitle"></span></p>
+                <p><strong>作者:</strong> <span id="successBookAuthor"></span></p>
+                <p><strong>归还日期:</strong> <span id="successDueDate"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'book_list' %}'">再借一本</button>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{% url 'my_borrowings' %}'">我的租借</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showBorrowModal() {
+        document.getElementById('borrowModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('borrowModal').style.display = 'none';
+        document.getElementById('successModal').style.display = 'none';
+    }
+
+    function confirmBorrow(bookId) {
+        const days = document.getElementById('days').value;
+        fetch(`/book/${bookId}/borrow/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ days: days })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('borrowModal').style.display = 'none';
+                document.getElementById('successBookTitle').innerText = data.book_title;
+                document.getElementById('successBookAuthor').innerText = data.book_author;
+                document.getElementById('successDueDate').innerText = data.due_date;
+                document.getElementById('successModal').style.display = 'block';
+            }
+        });
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            closeModal();
+        }
+    }
+</script>
+{% endblock %}

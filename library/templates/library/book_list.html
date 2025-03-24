@@ -1,0 +1,21 @@
+<!-- library/templates/library/book_list.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h1 class="mb-4 text-center">书目</h1>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for book in books %}
+    <div class="col">
+        <div class="card h-100 shadow">
+            <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <h6 class="card-text">{{ book.author }}</h6 >
+                <h6 class="card-subtitle mb-2 text-muted">{{ book.recommended_age }}</h6>
+                <a href="{% url 'book_detail' book.id %}" class="btn btn-primary">查看详情</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
