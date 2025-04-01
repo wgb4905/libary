@@ -2,7 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
 
+# 在文件开头添加以下代码
+BASE_DIR = Path(__file__).parent
+sys.path.append(str(BASE_DIR))  # 添加工程根目录到 Python 路径
 
 def main():
     """Run administrative tasks."""
