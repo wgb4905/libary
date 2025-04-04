@@ -11,8 +11,8 @@ class User(AbstractUser):
 
 class BookImage(models.Model):
     book = models.ForeignKey('Book', on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='book_gallery/')
-    caption = models.CharField(max_length=200, blank=True)
+    image = models.ImageField(upload_to='book_gallery/',verbose_name='详情轮播图片')
+    caption = models.CharField(max_length=200, blank=True,verbose_name='图片备注')
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -23,15 +23,21 @@ class BookImage(models.Model):
 
 
 class Book(models.Model):
-    title = models.CharField(max_length=100)
-    author = models.CharField(max_length=100)
-    description = models.TextField()
-    keywords = models.CharField(max_length=200, blank=True, null=True)
-    recommended_age = models.IntegerField(blank=True, null=True)
+    title = models.CharField(max_length=100,verbose_name='书名')
+    author = models.CharField(max_length=100,verbose_name='作者')
+    description = models.TextField(verbose_name='简介')
+    keywords = models.CharField(max_length=200, blank=True, null=True,verbose_name='关键字')
+    recommended_age = models.IntegerField(blank=True, null=True,verbose_name='推荐年龄')
     cover_image = models.ImageField(
         upload_to='book_covers/',
         blank=True,
-        null=True
+        null=True,
+        verbose_name='封面'
+    )
+    copies_count = models.PositiveIntegerField(
+        default=1,
+        verbose_name='副本数量',
+        help_text='保存时将自动创建指定数量的副本'
     )
 
     def save(self, *args, **kwargs):
@@ -44,6 +50,18 @@ class Book(models.Model):
             )
             self.cover_image = f'book_covers/{self.title}_cover.png'
         super().save(*args, **kwargs)
+    
+        
+        # 创建指定数量的副本
+        existing_copies = self.copies.count()
+        needed_copies = self.copies_count - existing_copies
+        
+        if needed_copies > 0:
+            BookCopy.objects.bulk_create([
+                BookCopy(book=self) for _ in range(needed_copies)
+            ])
+
+
 
     def __str__(self):
         return self.title
@@ -55,6 +73,11 @@ class Book(models.Model):
             # 如果没有上传图集，默认使用封面
             return [{'image': self.cover_image, 'caption': '封面'}]
         return images
+    
+    class Meta:
+        verbose_name = '书目'      # 单数形式
+        verbose_name_plural = '书目'  # 复数形式（避免自动加's'）
+
 
 class BookCopy(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='copies')
@@ -64,4 +87,8 @@ class BookCopy(models.Model):
     borrowed_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.book.title} - Copy {self.id}"
+        return f"{self.book.title} - {self.id}"
+    
+    class Meta:
+        verbose_name = '副本'
+        verbose_name_plural = '副本'
