@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils import timezone
 from django.http import JsonResponse
 from .models import Book, BookCopy, User
+from django.utils.translation import gettext_lazy as _
 
 def book_detail(request, book_id):
     book = get_object_or_404(Book, id=book_id)
@@ -82,9 +83,12 @@ def user_login(request):
             if user is not None:
                 login(request, user)
                 return redirect('book_list')
-    else:
-        form = AuthenticationForm()
-    return render(request, 'library/login.html', {'form': form})
+        return render(request, 'library/login.html', {
+            'form': form,
+            'error': _('用户名或密码错误'),
+            'show_retry': True
+        })
+    return render(request, 'library/login.html', {'form': AuthenticationForm()})
 
 def user_logout(request):
     logout(request)

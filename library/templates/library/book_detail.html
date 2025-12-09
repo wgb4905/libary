@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}{{ book.title }} - 柚子书屋{% endblock %}
+
+{% block opengraph %}
+    {{ block.super }}  
+    <meta property="og:title" content="{{ book.title }}">
+    <meta property="og:description" content="{{ book.description|default:'快来查看这本图书' }}">
+    <meta property="og:image" content="https://youzishuwu.com{{ book.cover_image.url }}">
+    <meta property="og:url" content="https://youzishuwu.com{% url 'book_detail' book.id %}">
+    <meta property="og:type" content="book">
+    <!-- 微信专用补充 -->
+    <meta itemprop="name" content="{{ book.title }} - 柚子书屋">
+    <meta itemprop="image" content="https://youzishuwu.cn{{ book.cover_image.url }}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
