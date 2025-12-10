@@ -9,6 +9,7 @@ from django.contrib import messages
 import os
 import zipfile
 import json
+from django.utils.html import format_html  # Added import
 
 class BulkUploadForm(forms.Form):
     zip_file = forms.FileField(label='图书资源包(ZIP)')
@@ -35,6 +36,13 @@ class BookCopyInline(admin.TabularInline):
     model = BookCopy
     form = BookCopyForm
     extra = 1  # 不显示空表单
+    readonly_fields = ('qr_code_preview',)  # Added field
+
+    def qr_code_preview(self, obj):
+        if obj.qr_code:
+            return format_html('<img src="{}" style="max-height: 100px;"/>', obj.qr_code.url)
+        return "-"
+    qr_code_preview.short_description = '二维码预览'
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
@@ -49,6 +57,20 @@ class BookAdmin(admin.ModelAdmin):
 @admin.register(BookCopy)
 class BookCopyAdmin(admin.ModelAdmin):
     form = BookCopyForm  # 使用自定义表单
+    list_display = ('id', 'book_title', 'is_available', 'borrower', 'due_date', 'qr_code_preview')  # Added fields
+    list_filter = ('is_available', 'book')  # Added list filter
+    search_fields = ('book__title', 'book__author', 'borrower__username')  # Added search fields
+    readonly_fields = ('qr_code_preview',)  # Added readonly field
+
+    def book_title(self, obj):
+        return obj.book.title
+    book_title.short_description = '书名'
+
+    def qr_code_preview(self, obj):
+        if obj.qr_code:
+            return format_html('<img src="{}" style="max-height: 100px;"/>', obj.qr_code.url)
+        return "-"
+    qr_code_preview.short_description = '二维码预览'
 
     def save_model(self, request, obj, form, change):
         quantity = form.cleaned_data.get('quantity', 1)
@@ -58,3 +80,19 @@ class BookCopyAdmin(admin.ModelAdmin):
                 BookCopy(book=book) for _ in range(quantity - 1)
             ])
         super().save_model(request, obj, form, change)
+
+    # 添加自定义操作
+    actions = ['generate_qr_codes_action']  # Added actions
+
+    def generate_qr_codes_action(self, request, queryset):
+        """为选中的图书副本生成二维码"""
+        count = 0
+        for book_copy in queryset:
+            if not book_copy.qr_code:
+                book_copy.generate_qr_code()
+                book_copy.save()
+                count += 1
+
+        self.message_user(request, f'成功为{count}个图书副本生成二维码')
+    generate_qr_codes_action.short_description = '生成二维码'
+

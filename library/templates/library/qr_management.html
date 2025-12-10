@@ -1,0 +1,276 @@
+{% extends 'library/base.html' %}
+
+{% block title %}二维码管理 - {{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-qrcode"></i> 图书二维码管理 - {{ book.title }}
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <!-- 图书基本信息 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            {% if book.cover_image %}
+                                <img src="{{ book.cover_image.url }}" class="img-fluid rounded" alt="{{ book.title }}">
+                            {% else %}
+                                <div class="text-center py-4 bg-light rounded">
+                                    <i class="fas fa-book fa-3x text-muted"></i>
+                                    <p class="mt-2">暂无封面</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h4>{{ book.title }}</h4>
+                            <p class="text-muted">作者: {{ book.author }}</p>
+                            <p>副本数量: {{ book.copies_count }}</p>
+                            <p>可借副本: {{ available_copies_count }}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 副本列表 -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-copy"></i> 图书副本列表
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>副本ID</th>
+                                        <th>状态</th>
+                                        <th>借阅者</th>
+                                        <th>应还日期</th>
+                                        <th>二维码</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for copy in book.copies.all %}
+                                    <tr>
+                                        <td>{{ copy.id }}</td>
+                                        <td>
+                                            {% if copy.is_available %}
+                                                <span class="badge bg-success">可借</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">已借出</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if copy.borrower %}
+                                                {{ copy.borrower.username }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if copy.due_date %}
+                                                {{ copy.due_date|date:"Y-m-d" }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if copy.qr_code %}
+                                                <img src="{{ copy.qr_code.url }}" style="width: 50px; height: 50px;" 
+                                                     alt="二维码" class="img-thumbnail">
+                                            {% else %}
+                                                <span class="badge bg-secondary">未生成</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                {% if copy.qr_code %}
+                                                    <a href="{{ copy.qr_code.url }}" target="_blank" 
+                                                       class="btn btn-outline-primary" title="查看二维码">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'qr_code_display' copy.id %}" target="_blank"
+                                                       class="btn btn-outline-info" title="打印二维码">
+                                                        <i class="fas fa-print"></i>
+                                                    </a>
+                                                    <a href="{% url 'scan_qr_code' copy.id %}" 
+                                                       class="btn btn-outline-success" title="扫描测试">
+                                                        <i class="fas fa-qrcode"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-outline-warning generate-qr-btn" 
+                                                            data-copy-id="{{ copy.id }}" title="生成二维码">
+                                                        <i class="fas fa-plus-circle"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">
+                                            暂无图书副本
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 批量操作 -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs"></i> 批量操作
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button id="generateAllQrBtn" class="btn btn-primary w-100 mb-2">
+                                        <i class="fas fa-qrcode"></i> 为所有副本生成二维码
+                                    </button>
+                                    <p class="small text-muted">为所有没有二维码的副本生成二维码</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{% url 'book_detail' book.id %}" class="btn btn-secondary w-100 mb-2">
+                                        <i class="fas fa-arrow-left"></i> 返回图书详情
+                                    </a>
+                                    <p class="small text-muted">返回图书详情页面</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 操作结果提示 -->
+<div id="resultToast" class="toast position-fixed top-0 end-0 m-3" style="z-index: 1050; display: none;">
+    <div class="toast-header">
+        <strong class="me-auto" id="toastTitle">提示</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMessage"></div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 初始化Toast
+    var resultToast = new bootstrap.Toast(document.getElementById('resultToast'));
+    
+    // 显示提示消息
+    function showToast(title, message, type = 'info') {
+        $('#toastTitle').text(title);
+        $('#toastMessage').text(message);
+        
+        // 设置Toast样式
+        var toastEl = $('#resultToast');
+        toastEl.removeClass('bg-success bg-danger bg-warning bg-info');
+        
+        switch(type) {
+            case 'success':
+                toastEl.addClass('bg-success text-white');
+                break;
+            case 'error':
+                toastEl.addClass('bg-danger text-white');
+                break;
+            case 'warning':
+                toastEl.addClass('bg-warning');
+                break;
+            default:
+                toastEl.addClass('bg-info text-white');
+        }
+        
+        resultToast.show();
+    }
+    
+    // 为单个副本生成二维码
+    $('.generate-qr-btn').click(function() {
+        var copyId = $(this).data('copy-id');
+        var button = $(this);
+        
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        $.ajax({
+            url: '/admin/generate-qr-codes/',
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'copy_id': copyId
+            },
+            success: function(response) {
+                if (response.success) {
+                    showToast('成功', response.message, 'success');
+                    // 刷新页面
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showToast('错误', response.error, 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-plus-circle"></i>');
+                }
+            },
+            error: function() {
+                showToast('错误', '网络请求失败', 'error');
+                button.prop('disabled', false).html('<i class="fas fa-plus-circle"></i>');
+            }
+        });
+    });
+    
+    // 为所有副本生成二维码
+    $('#generateAllQrBtn').click(function() {
+        var button = $(this);
+        var originalText = button.html();
+        
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 处理中...');
+        
+        $.ajax({
+            url: '/admin/generate-qr-codes/',
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showToast('成功', response.message, 'success');
+                    // 刷新页面
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showToast('错误', response.error, 'error');
+                    button.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function() {
+                showToast('错误', '网络请求失败', 'error');
+                button.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.toast {
+    min-width: 300px;
+}
+</style>
+{% endblock %}

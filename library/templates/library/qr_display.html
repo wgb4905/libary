@@ -1,0 +1,237 @@
+{% extends 'library/base.html' %}
+
+{% block title %}二维码打印 - {{ book.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .no-print {
+            display: none !important;
+        }
+        .qr-print-container {
+            page-break-inside: avoid;
+        }
+    }
+    
+    .qr-print-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .qr-label-card {
+        border: 2px solid #333;
+        padding: 20px;
+        margin-bottom: 30px;
+        background: white;
+    }
+    
+    .qr-label-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .qr-label-body {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+    }
+    
+    .qr-code-section {
+        flex: 0 0 250px;
+        text-align: center;
+    }
+    
+    .qr-code-img {
+        width: 200px;
+        height: 200px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        background: white;
+    }
+    
+    .book-info-section {
+        flex: 1;
+    }
+    
+    .book-title-print {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    
+    .book-author-print {
+        font-size: 18px;
+        color: #666;
+        margin-bottom: 15px;
+    }
+    
+    .book-details {
+        margin-top: 20px;
+    }
+    
+    .detail-row {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .detail-label {
+        font-weight: bold;
+        width: 100px;
+        color: #555;
+    }
+    
+    .detail-value {
+        flex: 1;
+        color: #333;
+    }
+    
+    .instructions {
+        margin-top: 30px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .print-controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 打印控制按钮 -->
+<div class="print-controls no-print">
+    <button onclick="window.print()" class="btn btn-primary mb-2">
+        <i class="fas fa-print"></i> 打印二维码
+    </button>
+    <br>
+    <button onclick="window.history.back()" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> 返回
+    </button>
+</div>
+
+<div class="qr-print-container">
+    <div class="qr-label-card">
+        <div class="qr-label-header">
+            <h2 class="mb-2">
+                <i class="fas fa-book"></i> 图书管理二维码
+            </h2>
+            <p class="text-muted mb-0">扫描二维码查看图书信息和借阅状态</p>
+        </div>
+        
+        <div class="qr-label-body">
+            <div class="qr-code-section">
+                {% if qr_code_url %}
+                    <img src="{{ qr_code_url }}" class="qr-code-img" alt="二维码">
+                    <p class="mt-2 mb-0 text-muted">扫描二维码</p>
+                    <p class="small text-muted">副本ID: {{ book_copy.id }}</p>
+                {% else %}
+                    <div class="alert alert-warning">
+                        二维码未生成
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="book-info-section">
+                <div class="book-title-print">
+                    {{ book.title }}
+                </div>
+                <div class="book-author-print">
+                    <i class="fas fa-user-edit"></i> {{ book.author }}
+                </div>
+                
+                <div class="book-details">
+                    <div class="detail-row">
+                        <span class="detail-label">图书ID:</span>
+                        <span class="detail-value">{{ book.id }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">副本ID:</span>
+                        <span class="detail-value">{{ book_copy.id }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">生成时间:</span>
+                        <span class="detail-value">{% now "Y年m月d日" %}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">系统:</span>
+                        <span class="detail-value">柚子书屋图书管理系统</span>
+                    </div>
+                </div>
+                
+                <div class="instructions mt-4">
+                    <h6><i class="fas fa-info-circle"></i> 使用说明：</h6>
+                    <ol class="mb-0">
+                        <li>将此二维码贴在图书封面或书脊上</li>
+                        <li>使用手机扫描二维码查看图书信息</li>
+                        <li>扫描后可借阅或归还图书</li>
+                        <li>保持二维码清洁，避免损坏</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 批量打印区域 -->
+    {% if request.GET.batch %}
+        <div style="page-break-before: always;"></div>
+        <div class="qr-label-card">
+            <div class="qr-label-header">
+                <h2 class="mb-2">
+                    <i class="fas fa-book"></i> 图书管理二维码
+                </h2>
+                <p class="text-muted mb-0">扫描二维码查看图书信息和借阅状态</p>
+            </div>
+            
+            <div class="qr-label-body">
+                <div class="qr-code-section">
+                    {% if qr_code_url %}
+                        <img src="{{ qr_code_url }}" class="qr-code-img" alt="二维码">
+                        <p class="mt-2 mb-0 text-muted">扫描二维码</p>
+                        <p class="small text-muted">副本ID: {{ book_copy.id }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="book-info-section">
+                    <div class="book-title-print">
+                        {{ book.title }}
+                    </div>
+                    <div class="book-author-print">
+                        <i class="fas fa-user-edit"></i> {{ book.author }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// 打印前准备
+window.onbeforeprint = function() {
+    // 可以在这里添加打印前的处理
+    console.log('准备打印...');
+};
+
+window.onafterprint = function() {
+    // 打印后的处理
+    console.log('打印完成');
+};
+</script>
+{% endblock %}

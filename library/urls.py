@@ -11,4 +11,10 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
     path('register/', views.user_register, name='register'),
+    # 新增二维码相关路由
+    path('scan/<int:bookcopy_id>/', views.scan_qr_code, name='scan_qr_code'),
+    path('api/qr-info/<int:bookcopy_id>/', views.qr_code_info, name='qr_code_info'),
+    path('admin/generate-qr-codes/', views.generate_qr_codes, name='generate_qr_codes'),
+    path('qr/print/<int:bookcopy_id>/', views.qr_code_display, name='qr_code_display'),
+    path('book/<int:book_id>/qr-management/', views.qr_management, name='qr_management'),
 ]

@@ -16,6 +16,7 @@ import os
 import pymysql
 
 pymysql.install_as_MySQLdb()
+pymysql.version_info = (2, 2, 4, "final", 0)  # 这行很重要！
 # 加载 .env 文件
 load_dotenv()
 
@@ -160,3 +161,8 @@ AUTH_USER_MODEL = 'library.User'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# 在文件末尾添加兼容性修复
+import django
+from django.db.backends.mysql.base import DatabaseWrapper
+DatabaseWrapper.data_types = DatabaseWrapper._data_types
