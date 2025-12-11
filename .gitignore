@@ -1,2 +1,132 @@
-# .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Django
+*.log
+*.pot
+*.pyc
+
+# 数据库文件（SQLite）
+db.sqlite3
+
+# 媒体文件（用户上传）
+media/
+
+# 收集的静态文件
+staticfiles/
+
+# 虚拟环境
+venv/
+env/
+myvenv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 环境变量（重要！不要提交敏感信息）
 .env
+.env.local
+.env.*.local
+
+# 开发环境配置文件
+local_settings.py
+settings/local.py
+
+# 测试覆盖率
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# 临时文件
+*.tmp
+*.temp
+
+# 日志文件
+logs/
+*.log
+
+# 备份文件
+*.bak
+*.backup
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.tgz
+
+# 项目特定
+# 二维码测试生成的文件（如果不需要提交）
+media/qr_codes/
+
+# Python字节码
+*.pyc
+__pycache__/
+
+# Django迁移文件（可选）
+# 如果您希望每个开发者自己生成迁移，可以排除：
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# 但建议保留迁移文件以便团队协作
+# 只排除自动生成的测试迁移
+*/migrations/00*.py
+
+# 开发调试文件
+debug.log
+
+# 系统文件
+*.pid
+
+# 文档生成
+docs/_build/
+
+# 包管理器
+Pipfile.lock
+poetry.lock
+
+# 机器学习/数据科学
+*.pkl
+*.model
+*.h5
+
+# 自定义
+# 添加您不想提交的其他文件或目录
+
